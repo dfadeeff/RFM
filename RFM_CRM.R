@@ -368,6 +368,53 @@ unique(orders_subset$serviceClass)
 
 long <- orders_subset[,.(order,serviceClass)]
 wide <- dcast(long,order~serviceClass,value.var = "serviceClass") #order(left side) ~ to serviceClass(right side), by serviceClass
+names(wide)
+#Reformat into numbers
+wide$ClassicN <- ifelse(is.na(wide$CLASSIC),0,1)
+wide$ExpressN <- ifelse(is.na(wide$EXPRESS),0,1)
+wide$LiteN <- ifelse(is.na(wide$LITE),0,1)
+wide$PersilN <- ifelse(is.na(wide$PERSIL),0,1)
+wide$PlusN <- ifelse(is.na(wide$PLUS),0,1)
+#Check the number of reformatted classes
+sum(wide$ClassicN)+sum(wide$ExpressN)+sum(wide$LiteN)+sum(wide$PersilN)+sum(wide$PlusN)
+sum(!is.na(orders_subset$serviceClass))
+
+#Now merge the wide stuff back into orders subset
+orders_subset <- merge(x = orders_subset, y = wide[,c("order","ClassicN","ExpressN","LiteN","PersilN","PlusN")], by='order', all.x = T)
+#Calculate orders by class
+classes <- orders_subset[isvalid==1,.(sum(ClassicN),sum(ExpressN),sum(LiteN),sum(PersilN),sum(PlusN)),by=.(customer)]
+
+#Merge stuff back into crm
+names(crm)
+names(classes)
+colnames(classes) <- c("customer_id","Classic","Express","Lite","Persil","Plus")
+names(orders_summary)
+
+orders_summary <- merge(x = orders_summary, y = classes, by = 'customer_id', all.x = T)
+
+orders_summary$NoClass<-orders_summary$validOrders-orders_summary$Classic-orders_summary$Express-orders_summary$Lite-orders_summary$Persil-orders_summary$Plus
+location <- orders_subset[,list(location[1],last(location)),by=customer] #take the first and last element from the group 
+colnames(location) <- c("customer_id","locationF","locationS")
+
+orders_summary <- merge(x=orders_summary,y=location[,.(customer_id,locationF)], by = "customer_id", all.x = T)
+
+#Merge orders_summary to crm
+crm <- merge(x = crm, y = orders_summary, by = "customer_id", all.x = T)
+
+#Format entries in crm
+crm$recency <- as.integer(crm$recency)
+crm$frequency <- as.integer(crm$frequency)
+crm$amount <- as.integer(crm$amount)
+crm$totalOrders <- as.integer(crm$totalOrders)
+crm$validOrders <- as.integer(crm$validOrders)
+crm$firstOrder <- as.Date(crm$firstOrder)
+crm$lastOrder <- as.Date(crm$lastOrder)
+
+
+#Write to a specific folder that is shared with another machine/server
+write.csv(crm, file="/home/dima/sisense_share/Cohorts/CRM.csv",row.names = FALSE)
+
+
 
 
 
