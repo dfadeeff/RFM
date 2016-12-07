@@ -118,6 +118,7 @@ colnames(crm)[8] <- c("tags")
 orders_table <- flatten(orders_table)
 str(orders_table)
 
+
 #####################################################
 #Try to split the user Agent
 #####################################################
@@ -132,15 +133,18 @@ str(orders_table)
 #orders_table$device_temp <- gsub(";.*$","", orders_table$device_temp) #remove parenthesis
 #orders_table$device_temp <- sub(".+? ", "", orders_table$device_temp) #remove string before first whitespace
 
+
+
 orders_table$device <- NULL
-orders_table$device[which(grepl("iPhone",orders_table$createdBy.userAgent)==T)] = "iOS app"
-orders_table$device[which(grepl("Android",orders_table$createdBy.userAgent)==T)] = "android app"
-orders_table$device[which(!is.na(orders_table$createdBy.userAgent) 
+orders_table$device[(grepl("iPhone",orders_table$createdBy.userAgent)==T)] = "iOS app"
+orders_table$device[(grepl("Android",orders_table$createdBy.userAgent)==T)] = "android app"
+orders_table$device[(!is.na(orders_table$createdBy.userAgent) 
                           & !grepl("^(iOS)",orders_table$device) 
                           & !grepl("^(android)",orders_table$device))] = "web app"
 
 #Check tha table
 table(orders_table$device)
+sum(!is.na(orders_table$device))
 
 #create device by customer
 orders_table <- data.table(orders_table)
@@ -372,6 +376,12 @@ crm$FirstName <- gsub(" .*$","",crm$person.name)
 
 #Write to a specific folder that is shared with another machine/server
 write.csv(crm, file="/home/dima/sisense_share/Cohorts/crm_full_list.csv",row.names = FALSE)
+
+
+
+
+
+
 
 
 
