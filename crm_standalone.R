@@ -320,15 +320,58 @@ colnames(crm)[3] <- c("email")
 
 crm <- merge(x = crm, y = notifications_last, by = "email", all.x = T)
 
+#####################################################
+#Deal with credits
+#####################################################
+#Set the folders
+from_folder <- "/home/dima/sisense_share"
+to_folder <- "/home/dima/Automation/Reports/CRM/"
+
+#Identify files
+list_files <- list.files(from_folder,"branch_credits.csv",full.names = T)
+
+#Copy the files
+file.copy(list_files,to=to_folder,overwrite = T)
+
+credits <- read.csv("branch_credits.csv",header = T,sep = ";")
+colnames(credits)[1] <- c("reference")
+
+#Merge credits with crm, left join
+crm <- merge(x = crm , y = credits, by = "reference", all.x =  T) 
+crm$last_updated <- NULL #Drop the last column
+
+#####################################################
+#Deal with RFM
+#####################################################
+colnames(new_data)[1] <- "reference"
+crm <- merge( x = crm, y = new_data, by = "reference", all.x = T)
+
+#Check unique values
+length(unique(crm$customer))
+length(unique(crm$reference))
+
+#####################################################
+#Beautify
+#####################################################
+#Paste
+crm$SubscriberKey <- paste("ZJ",crm$customer,sep = '_')
+#Reformat dates
+crm$firstOrder <- as.Date(crm$firstOrder,"%Y-%m-%d")
+crm$lastOrder <- as.Date(crm$lastOrder,"%Y-%m-%d")
+
+crm$DiffFirstOrderDate <- difftime(time1 = Sys.Date(),
+                                   time2 = crm$firstOrder,
+                                   units = 'days')
+
+crm$IndividualFreq <- difftime(time1 = crm$lastOrder,
+                               time2 = crm$firstOrder,
+                               units = "days") / (crm$validOrders-1)
+
+crm$FirstName <- gsub(" .*$","",crm$person.name)
 
 
-
-
-
-
-
-
-
+#Write to a specific folder that is shared with another machine/server
+write.csv(crm, file="/home/dima/sisense_share/Cohorts/crm_full_list.csv",row.names = FALSE)
 
 
 
