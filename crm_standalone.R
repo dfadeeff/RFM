@@ -266,14 +266,6 @@ ratings_subset <- ratings[,c("reference","topics")]
 ratings_subset <- data.table(ratings_subset)
 
 
-#Unlist
-rating_temp <- ratings_subset[, .(ratnames = names(unlist(topics)), ratvalues = unlist(topics)), by = reference]
-
-rating_temp <- dcast(rating_temp,reference ~ ratnames, value.var = "ratvalues",
-                  fun.aggregate = function(x) paste(x, collapse=""))
-crm$CustomerStatus[which(crm$validOrders==1)] <- "New"
-crm$CustomerStatus[which(crm$validOrders>1)] <- "Returning"
-
 
 #####################################################
 #Deal with ratings
